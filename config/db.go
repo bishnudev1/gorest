@@ -13,7 +13,14 @@ import (
 	//"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
-func ConnectDB() *mongo.Client {
+type MONGO struct {
+	Client *mongo.Client
+	DB     *mongo.Database
+}
+
+var MI MONGO
+
+func ConnectDB() {
 
 	if os.Getenv("APP_ENV") != "production" {
 		err := godotenv.Load()
@@ -22,13 +29,9 @@ func ConnectDB() *mongo.Client {
 		}
 	}
 
-	client, err := mongo.NewClient(options.Client().ApplyURI(os.Getenv("MONGO_URI")))
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	err = client.Connect(ctx)
+
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(os.Getenv("MONGO_URI")))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -38,13 +41,13 @@ func ConnectDB() *mongo.Client {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("Connected to MongoDB")
-	return client
-}
+	fmt.Println("Connected to MongoDB successfully!")
 
-var DB *mongo.Client = ConnectDB()
-
-func GetCollection(client *mongo.Client, collectionName string) *mongo.Collection {
-	collection := client.Database("golangAPI").Collection(collectionName)
-	return collection
+	MI = MONGO{
+		Client: client,
+		DB:     client.Database("igrosine"),
+	}
+	fmt.Println("MI", MI)
+	var usersCollection *mongo.Collection = MI.DB.Collection("users")
+	fmt.Println("usersCollection", usersCollection)
 }

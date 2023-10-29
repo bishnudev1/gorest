@@ -24,8 +24,6 @@ func main() {
 		return c.SendString("Hello, World 👋!")
 	})
 
-	//routes.Routes(app)
-
 	app.Listen(":5000")
 
 }
