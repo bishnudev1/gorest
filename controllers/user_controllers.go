@@ -7,6 +7,8 @@ import (
 
 	"gorest/models"
 	"gorest/responses"
+
+	"gorest/utils"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -26,34 +28,46 @@ func CreateUsers(c *fiber.Ctx) error {
 	defer cancel()
 
 	usersCollection := config.MI.DB.Collection("users")
-
+	fmt.Print(usersCollection)
+	fmt.Print(ctx)
 	var user models.User
 
-	if err := c.BodyParser(&user); err != nil {
+	err := c.BodyParser(&user)
+
+	if err != nil {
 		return c.Status(500).JSON(responses.UserResponse{Status: 500, Message: "error", Data: &fiber.Map{"data": err.Error()}})
 	}
 
-	if validationErr := validate.Struct(&user); validationErr != nil {
+	validationErr := validate.Struct(&user)
+
+	if validationErr != nil {
 		return c.Status(422).JSON(responses.UserResponse{Status: 422, Message: "error", Data: &fiber.Map{"data": validationErr.Error()}})
+	}
+
+	hashedPassword, err := utils.HashPassword(user.Password)
+
+	if err != nil {
+		return c.Status(500).JSON(responses.UserResponse{Status: 500, Message: "error", Data: &fiber.Map{"data": err.Error()}})
+	}
+
+	fmt.Print(hashedPassword)
+
+	var existingUsers models.User
+
+	err = usersCollection.FindOne(ctx, bson.M{"email": user.Email}).Decode(&existingUsers)
+
+	if err == nil {
+		fmt.Println("Error Finding Users", err)
+		return c.Status(500).JSON(responses.UserResponse{Status: 500, Message: "Users Already Exists", Data: &fiber.Map{"data": "Users Already Exists"}})
 	}
 
 	newUsers := models.User{
 		Name:      user.Name,
 		Email:     user.Email,
-		Password:  user.Password,
+		Password:  hashedPassword,
 		CreatedAt: time.Now(),
 	}
 
-	fmt.Println("New Users", newUsers)
-
-	var existingUsers models.User
-
-	err := usersCollection.FindOne(ctx, bson.M{"email": newUsers.Email}).Decode(&existingUsers)
-
-	if err == nil {
-		fmt.Println("Error Finding Users", err)
-		return c.Status(500).JSON(responses.UserResponse{Status: 500, Message: "Users Already Exists", Data: &fiber.Map{"data": err.Error()}})
-	}
 	result, err := usersCollection.InsertOne(ctx, newUsers)
 
 	if err != nil {
