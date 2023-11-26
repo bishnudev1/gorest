@@ -71,6 +71,7 @@ func CreateUsers(c *fiber.Ctx) error {
 		Name:      user.Name,
 		Email:     user.Email,
 		Password:  hashedPassword,
+		Number:    user.Number,
 		CreatedAt: time.Now(),
 	}
 
