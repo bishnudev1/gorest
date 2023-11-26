@@ -12,14 +12,20 @@ import (
 	"time"
 
 	"github.com/go-playground/validator/v10"
-
 	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v5"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
 //var usersCollection *mongo.Collection = config.MI.DB.Collection("users")
 
 var validate = validator.New()
+
+func GetUser(c *fiber.Ctx) error {
+	user := c.Locals("gorest").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	return c.Status(200).JSON(responses.UserResponse{Status: 200, Message: "success", Data: &fiber.Map{"data": claims}})
+}
 
 func CreateUsers(c *fiber.Ctx) error {
 
@@ -75,6 +81,62 @@ func CreateUsers(c *fiber.Ctx) error {
 	}
 
 	return c.Status(200).JSON(responses.UserResponse{Status: 200, Message: "Users Account has Created Successfully", Data: &fiber.Map{"data": result}})
+}
+
+func LoginUser(c *fiber.Ctx) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+
+	defer cancel()
+
+	usersCollection := config.MI.DB.Collection("users")
+
+	var user models.User
+
+	err := c.BodyParser(&user)
+
+	if err != nil {
+		return c.Status(500).JSON(responses.UserResponse{Status: 500, Message: "error", Data: &fiber.Map{"data": err.Error()}})
+	}
+
+	// validationErr := validate.Struct(&user)
+
+	// if validationErr != nil {
+	// 	return c.Status(422).JSON(responses.UserResponse{Status: 422, Message: "error", Data: &fiber.Map{"data": validationErr.Error()}})
+	// }
+
+	var existingUsers models.User
+
+	err = usersCollection.FindOne(ctx, bson.M{"email": user.Email}).Decode(&existingUsers)
+
+	if err != nil {
+		return c.Status(500).JSON(responses.UserResponse{Status: 500, Message: "User Not Found", Data: &fiber.Map{"data": err.Error()}})
+	}
+
+	fmt.Println("Existing User", existingUsers)
+
+	passwordMatched := utils.CheckPasswordHash(user.Password, existingUsers.Password)
+
+	if !passwordMatched {
+		return c.Status(500).JSON(responses.UserResponse{Status: 500, Message: "Invalid Password", Data: &fiber.Map{"data": "Invalid Password"}})
+	}
+
+	token, err := utils.GenerateJwt(existingUsers)
+
+	if err != nil {
+		return c.Status(500).JSON(responses.UserResponse{Status: 500, Message: "Invalid Password", Data: &fiber.Map{"data": "Invalid Password"}})
+	}
+
+	cookie := new(fiber.Cookie)
+
+	cookie.Name = "gorest"
+
+	cookie.Value = token
+
+	cookie.Expires = time.Now().Add(24 * time.Hour)
+
+	c.Cookie(cookie)
+
+	return c.Status(200).JSON(responses.UserResponse{Status: 200, Message: "success", Data: &fiber.Map{"data": token}})
 }
 
 func UpdateUsers(c *fiber.Ctx) error {

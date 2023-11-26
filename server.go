@@ -5,6 +5,7 @@ import (
 	"gorest/config"
 	"gorest/routes"
 
+	jwtware "github.com/gofiber/contrib/jwt"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -18,6 +19,10 @@ func main() {
 	} else {
 		fmt.Println("Fiber is not running")
 	}
+
+	app.Use(jwtware.New(jwtware.Config{
+		SigningKey: jwtware.SigningKey{Key: []byte("bishnudevkhutiasecretkey")},
+	}))
 
 	app.Get("/", func(c *fiber.Ctx) error {
 
