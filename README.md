@@ -7,7 +7,7 @@
 ## API Endpoints
 - Get All Users "/ap1/v1/users"
 - Create New User "/api/v1/create-user"
-- Login User "/api/v1/create-user"
+- Login User "/api/v1/login-user"
 - Profile "/api/v1/me"
 - Update A User "/api/v1/update-user"
 - Delete A User "/api/v1/delete-user"
