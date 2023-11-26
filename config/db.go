@@ -48,6 +48,4 @@ func ConnectDB() {
 		DB:     client.Database("igrosine"),
 	}
 	fmt.Println("MI", MI)
-	var usersCollection *mongo.Collection = MI.DB.Collection("users")
-	fmt.Println("usersCollection", usersCollection)
 }

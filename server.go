@@ -16,6 +16,7 @@ func main() {
 		fmt.Println("Fiber is running")
 		config.ConnectDB()
 		routes.Routes(app)
+		routes.ArticleRoutes(app)
 	} else {
 		fmt.Println("Fiber is not running")
 	}

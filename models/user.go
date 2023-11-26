@@ -2,8 +2,6 @@ package models
 
 import (
 	"time"
-
-	"github.com/go-playground/validator/v10"
 )
 
 type User struct {
@@ -14,4 +12,4 @@ type User struct {
 	CreatedAt time.Time `json:"created_at" bson:"created_at"`
 }
 
-var validate = validator.New()
+// var validate = validator.New()
