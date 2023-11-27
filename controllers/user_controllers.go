@@ -281,3 +281,17 @@ func Working(c *fiber.Ctx) error {
 
 // 	return c.Status(200).JSON(responses.UserResponse{Status: 200, Message: "success", Data: &fiber.Map{"data": "Collection Deleted Successfully"}})
 // }
+
+func Logout(c *fiber.Ctx) error {
+	cookie := new(fiber.Cookie)
+
+	cookie.Name = "gorest"
+
+	cookie.Value = ""
+
+	cookie.Expires = time.Now().Add(-24 * time.Hour)
+
+	c.Cookie(cookie)
+
+	return c.Status(200).JSON(responses.UserResponse{Status: 200, Message: "success", Data: &fiber.Map{"data": "User Logout Successfully"}})
+}
